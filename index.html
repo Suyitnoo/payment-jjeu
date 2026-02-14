@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>payment jjeu</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        /* --- ULTIMATE THEME VARS (Dark Gray + Old White) --- */
+        :root {
+            --bg-main: #121212;
+            --bg-deep: #0a0a0a;
+            --card-light: #e5e5e5;
+            --card-surface: #1e1e1e;
+            --text-on-light: #1f2937;
+            --text-on-dark: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #2563eb;
+            --radius-box: 24px;
+        }
+
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            outline: none; user-select: none; scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-on-dark);
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: flex-start;
+            overflow: hidden;
+        }
+
+        .app-frame {
+            width: 100%; max-width: 480px; height: 100vh;
+            background: var(--bg-main);
+            position: relative; display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        @media(min-width: 500px) {
+            body { align-items: center; }
+            .app-frame { height: 95vh; border-radius: 35px; border: 4px solid #333; }
+        }
+
+        /* --- HEADER --- */
+        /* Status bar CSS dihapus penggunaannya, Header area disesuaikan sedikit agar tidak terlalu mepet atas */
+        .header-area {
+            padding: 30px 24px 20px; /* Padding atas ditambah agar tampilan tetap pas */
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .btn-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-on-dark); display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .btn-icon:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .notif-badge {
+            position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px;
+            background: #ef4444; border-radius: 50%; border: 2px solid var(--bg-main);
+            color: white; font-size: 9px; font-weight: bold; display: flex; 
+            align-items: center; justify-content: center; opacity: 0; transition: 0.3s;
+        }
+        .notif-badge.show { opacity: 1; }
+
+        /* --- CONTENT SCROLL AREA --- */
+        .content-area {
+            flex: 1; overflow-y: auto; padding: 0 24px 100px;
+            scrollbar-width: none;
+        }
+        .content-area::-webkit-scrollbar { display: none; }
+
+        /* --- PROFILE SECTION --- */
+        .profile-section {
+            display: flex; align-items: center; gap: 15px; margin-bottom: 15px;
+        }
+        .p-img {
+            width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--text-on-dark);
+            object-fit: cover;
+        }
+        .p-info h2 { font-size: 18px; font-weight: 700; color: var(--text-on-dark); margin-bottom: 2px; }
+        .p-info p { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
+
+        /* --- SOCIAL MEDIA (NEW) --- */
+        .social-bar {
+            margin-top: 8px; display: flex; gap: 10px;
+        }
+        .soc-icon {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; text-decoration: none; transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .soc-icon:active { transform: scale(0.9); background: var(--accent); border-color: var(--accent); }
+
+        /* --- MARQUEE --- */
+        .marquee-container {
+            background: #1e1e1e; border-radius: 8px; overflow: hidden; white-space: nowrap;
+            padding: 8px 0; margin-bottom: 25px; border-left: 3px solid var(--accent); margin-top: 15px;
+        }
+        .marquee-text {
+            display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite;
+            font-size: 11px; color: var(--text-muted); font-family: monospace;
+        }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        /* --- MENU GRID --- */
+        .menu-title { font-size: 14px; font-weight: 700; margin-bottom: 15px; color: var(--text-on-dark); letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.8; }
+        
+        .menu-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+
+        .menu-card {
+            background: var(--card-light);
+            border-radius: var(--radius-box);
+            padding: 20px; height: 130px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden;
+            transition: transform 0.2s; cursor: pointer;
+        }
+        .menu-card:active { transform: scale(0.96); }
+        
+        .mc-icon {
+            width: 40px; height: 40px; background: #fff;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 1;
+        }
+        
+        .mc-text h3 { font-size: 15px; font-weight: 800; color: var(--text-on-light); margin-bottom: 3px; z-index: 1; position: relative;}
+        .mc-text p { font-size: 11px; font-weight: 500; color: #666; z-index: 1; position: relative;}
+        .menu-card::before {
+            content: ''; position: absolute; top: -20px; right: -20px;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(0,0,0,0.05); z-index: 0;
+        }
+
+        /* --- QRIS WIDGET (UPDATED) --- */
+        .card-qris-full {
+            grid-column: span 2; height: 90px;
+            background: #222; /* Darker grey */
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+            padding: 0 25px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .qris-left {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.1);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #fff;
+        }
+        .qris-right { text-align: right; }
+        .qris-right h3 { color: #fff; font-size: 18px; margin-bottom: 2px; }
+        .qris-right p { color: #888; font-size: 12px; }
+
+        /* --- NEW INFO WIDGET --- */
+        .info-features {
+            margin-top: 15px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+        }
+        .feat-item {
+            background: #fff; border-radius: 16px; padding: 15px 10px;
+            text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .feat-item:active { transform: translateY(3px); background: #f0f0f0; }
+        .feat-icon { 
+            font-size: 20px; color: var(--accent); margin-bottom: 5px; 
+            display: inline-block;
+        }
+        .feat-text h5 { color: #222; font-size: 11px; font-weight: 700; }
+        .feat-text p { color: #666; font-size: 9px; }
+
+        /* --- PROMO BANNER --- */
+        .promo-banner {
+            margin-top: 25px;
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 20px; padding: 20px;
+            position: relative; overflow: hidden;
+        }
+        .promo-banner h4 { color: white; font-size: 16px; font-weight: 700; margin-bottom: 5px; position: relative; z-index: 2; }
+        .promo-banner p { color: rgba(255,255,255,0.8); font-size: 11px; position: relative; z-index: 2; max-width: 70%; }
+        .promo-deco { position: absolute; bottom: -10px; right: -10px; font-size: 80px; color: rgba(255,255,255,0.1); transform: rotate(-15deg); }
+
+        /* --- NOTIFICATION PANEL (NEW) --- */
+        .notif-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 200;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px);
+        }
+        .notif-panel.active { opacity: 1; pointer-events: auto; }
+        .notif-box {
+            width: 85%; max-width: 350px; background: #1a1a1a;
+            border-radius: 24px; border: 1px solid #333;
+            overflow: hidden; max-height: 60vh; display: flex; flex-direction: column;
+        }
+        .nb-header {
+            padding: 15px 20px; border-bottom: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #222;
+        }
+        .nb-header h3 { font-size: 14px; color: #fff; font-weight: 700; }
+        .nb-close { cursor: pointer; color: #888; font-size: 20px; padding: 5px; }
+        .nb-body { padding: 10px; overflow-y: auto; }
+        .notif-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .ni-icon {
+            width: 30px; height: 30px; background: rgba(37,99,235,0.2); 
+            color: #60a5fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        }
+        .ni-text h5 { color: #ddd; font-size: 12px; margin-bottom: 2px; }
+        .ni-text p { color: #777; font-size: 10px; }
+        .empty-state { text-align: center; padding: 30px; color: #555; font-size: 12px; }
+
+        /* --- FLOATING CHAT --- */
+        .fab-container { position: fixed; bottom: 25px; right: 25px; z-index: 90; }
+        .btn-fab {
+            width: 58px; height: 58px; border-radius: 20px;
+            background: var(--text-on-dark); color: var(--bg-deep);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border: none; cursor: pointer; transition: 0.3s;
+        }
+        .btn-fab:hover { transform: scale(1.1) rotate(5deg); }
+        
+        /* --- CHAT WINDOW --- */
+        .chat-modal {
+            position: fixed; bottom: 90px; right: 25px; width: 300px; height: 400px;
+            background: #1a1a1a; border-radius: 24px; border: 1px solid #333;
+            display: flex; flex-direction: column; overflow: hidden;
+            transform: scale(0); opacity: 0; transform-origin: bottom right;
+            transition: 0.3s ease; z-index: 90;
+        }
+        .chat-modal.active { transform: scale(1); opacity: 1; }
+        .cm-header { padding: 15px; background: #222; display: flex; justify-content: space-between; color: white; font-weight: 700; font-size: 13px; }
+        .cm-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .cm-footer { padding: 10px; background: #222; display: flex; gap: 5px; overflow-x: auto; }
+        .bubble { padding: 8px 12px; border-radius: 10px; font-size: 11px; max-width: 85%; }
+        .b-bot { background: #333; color: #ddd; align-self: flex-start; }
+        .b-user { background: var(--text-on-dark); color: #000; align-self: flex-end; }
+        .c-chip { background: transparent; border: 1px solid #444; color: #aaa; padding: 5px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; white-space: nowrap; }
+
+        /* --- BOTTOM SHEET --- */
+        .sheet-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100;
+            opacity: 0; pointer-events: none; transition: 0.3s; backdrop-filter: blur(5px);
+        }
+        .sheet-overlay.active { opacity: 1; pointer-events: auto; }
+        .sheet-panel {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: #e5e5e5; border-radius: 30px 30px 0 0;
+            padding: 25px; transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 80vh; overflow-y: auto;
+        }
+        .sheet-overlay.active .sheet-panel { transform: translateY(0); }
+        .pay-item {
+            background: #fff; padding: 15px; border-radius: 16px;
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .pi-left { display: flex; align-items: center; gap: 12px; }
+        .pi-img { width: 40px; height: 40px; object-fit: contain; }
+        .pi-info h5 { font-size: 14px; color: #000; font-weight: 700; }
+        .pi-info p { font-size: 12px; color: #666; font-family: monospace; }
+        .btn-action { width: 34px; height: 34px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333; border: none; font-size: 16px; cursor: pointer; }
+        .qris-display { background: #fff; padding: 20px; border-radius: 20px; text-align: center; }
+
+        /* Utility */
+        .ripple { position: relative; overflow: hidden; }
+        .ripple span { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.3); transform: scale(0); animation: ripple 0.6s linear; pointer-events: none; }
+        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+    <div class="app-frame">
+        <div class="header-area">
+            <div class="btn-icon ripple" id="btnMenu">
+                <i class="ri-apps-2-line"></i>
+            </div>
+            <div style="font-weight:800; font-size:16px; letter-spacing:1px;">jjeu<span style="color:var(--text-muted);">PAY</span></div>
+            <div class="btn-icon ripple" onclick="toggleNotifPanel()">
+                <i class="ri-notification-4-line"></i>
+                <div class="notif-badge" id="notifBadge">0</div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            
+            <div class="profile-section">
+                <img src="https://image2url.com/r2/default/images/1771055015426-31cbc40f-6d5c-4038-98e3-c4897146b748.jpg" class="p-img">
+                <div class="p-info">
+                    <h2 id="userName"></h2>
+                    <p><span class="status-dot"></span> Online & Verified</p>
+                    <div class="social-bar">
+                        <a href="https://instagram.com" target="_blank" class="soc-icon ripple" onclick="playTick()">
+                            <i class="ri-instagram-fill"></i>
+                        </a>
+                        <a href="https://telegram.org" target="_blank" class="soc-icon ripple" onclick="playTick()">
+                            <i class="ri-telegram-fill"></i>
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" class="soc-icon ripple" onclick="playTick()">
+                            <i class="ri-linkedin-fill"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="marquee-container">
+                <div class="marquee-text">
+                    INFO: Pembayaran Otomatis DANA & ShopeePay tersedia 24 Jam • Hubungi Admin jika ada kendala • Jangan lupa simpan bukti transfer.
+                </div>
+            </div>
+
+            <div class="menu-title">Main Service</div>
+            <div class="menu-grid">
+                <div class="menu-card card-qris-full ripple" onclick="openSheet('qris')">
+                    <div class="qris-left"><i class="ri-qr-scan-2-line"></i></div>
+                    <div class="qris-right">
+                        <h3>Scan QRIS</h3>
+                        <p>Instant Payment</p>
+                    </div>
+                </div>
+
+                <div class="menu-card ripple" onclick="openSheet('dana_only')">
+                    <div class="mc-icon" style="color:#10b981;"><i class="ri-wallet-3-fill"></i></div>
+                    <div class="mc-text">
+                        <h3>E-Wallet</h3>
+                        <p>Dana / OVO / GoPay</p>
+                    </div>
+                </div>
+
+                <div class="menu-card ripple" onclick="openSheet('bank')">
+                    <div class="mc-icon" style="color:#f59e0b;"><i class="ri-bank-card-fill"></i></div>
+                    <div class="mc-text">
+                        <h3>Transfer</h3>
+                        <p>Semua Bank</p>
+                    </div>
+                </div>
+
+                 <div class="menu-card ripple" onclick="openSheet('pulsa')">
+                    <div class="mc-icon" style="color:#ef4444;"><i class="ri-smartphone-fill"></i></div>
+                    <div class="mc-text">
+                        <h3>Top Up</h3>
+                        <p>Pulsa All Op</p>
+                    </div>
+                </div>
+
+                <div class="menu-card ripple" onclick="openSheet('all')">
+                    <div class="mc-icon" style="color:#6366f1;"><i class="ri-grid-fill"></i></div>
+                    <div class="mc-text">
+                        <h3>Lainnya</h3>
+                        <p>Lihat Menu</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-features">
+                <div class="feat-item ripple" onclick="playTick()">
+                    <i class="ri-flashlight-fill feat-icon"></i>
+                    <div class="feat-text">
+                        <h5>Proses Cepat</h5>
+                        <p>Instant Process</p>
+                    </div>
+                </div>
+                <div class="feat-item ripple" onclick="playTick()">
+                    <i class="ri-shield-check-fill feat-icon"></i>
+                    <div class="feat-text">
+                        <h5>Aman 100%</h5>
+                        <p>Terverifikasi</p>
+                    </div>
+                </div>
+                <div class="feat-item ripple" onclick="playTick()">
+                    <i class="ri-customer-service-fill feat-icon"></i>
+                    <div class="feat-text">
+                        <h5>Admin 24/7</h5>
+                        <p>Siap Membantu</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="promo-banner ripple">
+                <h4>Promo Cashback 50%</h4>
+                <p>Khusus pengguna baru untuk transaksi pertama via QRIS.</p>
+                <i class="ri-coupon-3-line promo-deco"></i>
+            </div>
+
+            <div style="height:30px;"></div>
+        </div>
+
+        <div class="fab-container">
+            <button class="btn-fab ripple" id="fabChat">
+                <i class="ri-customer-service-2-fill"></i>
+            </button>
+        </div>
+
+        <div class="chat-modal" id="chatWin">
+            <div class="cm-header">
+                <span>Live Support</span>
+                <i class="ri-close-line" id="closeChat" style="cursor:pointer; font-size:18px;"></i>
+            </div>
+            <div class="cm-body" id="chatBody">
+                <div class="bubble b-bot">Halo! Ada yang bisa kami bantu?</div>
+            </div>
+            <div class="cm-footer">
+                <button class="c-chip" onclick="sendChat('konfirmasi')">Konfirmasi</button>
+                <button class="c-chip" onclick="sendChat('masalah')">Kendala</button>
+                <button class="c-chip" onclick="sendChat('admin')">Admin</button>
+            </div>
+        </div>
+
+        <div class="notif-panel" id="notifPanel">
+            <div class="notif-box">
+                <div class="nb-header">
+                    <h3>Notifikasi</h3>
+                    <i class="ri-close-circle-fill nb-close" onclick="toggleNotifPanel()"></i>
+                </div>
+                <div class="nb-body" id="notifList">
+                    <div class="empty-state">Belum ada aktivitas terbaru</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="sheet-overlay" id="sheet">
+        <div class="sheet-panel">
+            <div style="width:40px; height:5px; background:#ccc; border-radius:10px; margin:0 auto 15px;"></div>
+            <div style="text-align:center; margin-bottom:25px;">
+                <h3 style="color:#000; font-size:16px; font-weight:800;" id="sheetTitle">Payment</h3>
+            </div>
+            <div id="sheetList"></div>
+            <button class="ripple" id="btnCloseSheet" style="width:100%; padding:15px; border-radius:12px; border:none; background:#000; color:#fff; font-weight:700; margin-top:15px;">Tutup</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA PAYMENT (UPDATED) ---
+        const dataPay = {
+            // E-Wallet
+            dana: { name: 'DANA', num: '083833762729', img: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg' },
+            shopee: { name: 'ShopeePay', num: '0892xxx', img: 'https://image2url.com/r2/default/images/1771054035742-f2a63de7-6995-409c-aa46-779497ddfe56.jpg' }, // Placeholder
+            gopay: { name: 'GoPay', num: '0877xxx', img: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg' },
+            ovo: { name: 'OVO', num: '0896xxx', img: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg' },
+            linkaja: { name: 'LinkAja', num: '0852xxx', img: 'https://image2url.com/r2/default/images/1771054065090-252e6bf4-30eb-4810-bf70-8d641e45a5bc.jpg' },
+            
+            // Bank
+            sea: { name: 'BCA', num: '275xxx', img: 'https://image2url.com/r2/default/images/1771053938456-f0150b24-4fda-4811-b2f0-ba02ad65a236.jpg' },
+            sea2: { name: 'SeaBank', num: '901905094435', img: 'https://image2url.com/r2/default/images/1771053997713-6aa06267-4016-4580-a5c3-6cb4b90058df.jpg' },
+            bri: { name: 'BRI', num: '231xxx', img: 'https://upload.wikimedia.org/wikipedia/commons/6/68/BANK_BRI_logo.svg' },
+
+            // Pulsa
+            pulsa: { name: 'Telkomsel', num: '0825xxx', img: 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Telkomsel_2021_icon.svg' },
+            indosat: { name: 'Indosat', num: '0857xxx', img: 'https://image2url.com/r2/default/images/1771053879473-f3f5eac6-a19e-4bd4-845e-ed648777ed8c.jpg' },
+            tri: { name: 'Tri (3)', num: '0895xxx', img: 'https://image2url.com/r2/default/images/1771053845880-e43f335d-f210-4603-a8e3-b5fa170ec01c.jpg' },
+            smartfren: { name: 'Smartfren', num: '0882xxx', img: 'https://image2url.com/r2/default/images/1771053778511-c0782cce-88d4-436a-aeab-a37fe7faa4f9.jpg' }
+        };
+
+        // --- SOUND & UTILS ---
+        const audio = document.getElementById('clickSound');
+        const playTick = () => { audio.currentTime = 0; audio.play().catch(()=>{}); };
+
+        // --- TYPING NAME ---
+        const txtName = "jjeu el maja";
+        let i = 0;
+        function typeWriter() {
+            if(i < txtName.length) {
+                document.getElementById('userName').innerHTML += txtName.charAt(i);
+                i++; setTimeout(typeWriter, 80);
+            }
+        }
+        setTimeout(typeWriter, 500);
+
+        // --- CLOCK FUNCTION REMOVED ---
+        // Kode jam dihapus agar tidak terjadi error di console.
+
+        // --- NOTIFICATION SYSTEM (REALTIME) ---
+        let notifCount = 0;
+        const notifBadge = document.getElementById('notifBadge');
+        const notifContainer = document.getElementById('notifList');
+
+        function addLog(actionName) {
+            notifCount++;
+            notifBadge.innerText = notifCount;
+            notifBadge.classList.add('show');
+            
+            const time = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+            
+            // Remove empty state if present
+            if(notifContainer.querySelector('.empty-state')) {
+                notifContainer.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'notif-item';
+            item.innerHTML = `
+                <div class="ni-icon"><i class="ri-file-list-3-line"></i></div>
+                <div class="ni-text">
+                    <h5>Membuka Menu: ${actionName}</h5>
+                    <p>Tercatat pada ${time}</p>
+                </div>
+            `;
+            notifContainer.prepend(item);
+        }
+
+        function toggleNotifPanel() {
+            playTick();
+            const p = document.getElementById('notifPanel');
+            p.classList.toggle('active');
+            if(p.classList.contains('active')) {
+                // Reset badge saat dibuka
+                notifCount = 0;
+                notifBadge.classList.remove('show');
+            }
+        }
+
+        // --- SHEET LOGIC ---
+        const sheet = document.getElementById('sheet');
+        const list = document.getElementById('sheetList');
+        const title = document.getElementById('sheetTitle');
+
+        function rowHtml(key) {
+            const d = dataPay[key];
+            // Fallback image if needed
+            const imgUrl = d.img ? d.img : 'https://placehold.co/100'; 
+            return `
+                <div class="pay-item">
+                    <div class="pi-left">
+                        <img src="${imgUrl}" class="pi-img" onerror="this.src='https://placehold.co/100'">
+                        <div class="pi-info">
+                            <h5>${d.name}</h5>
+                            <p id="t-${key}">${d.num}</p>
+                        </div>
+                    </div>
+                    <button class="btn-action ripple" onclick="copyIt('t-${key}', '${d.name}')">
+                        <i class="ri-file-copy-line"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        window.openSheet = (mode) => {
+            playTick();
+            let html = '';
+            let logName = '';
+
+            if(mode === 'qris') {
+                title.innerText = "SCAN QRIS";
+                logName = "QRIS Payment";
+                // Menggunakan placeholder QRIS online
+                html = `
+                    <div class="qris-display">
+                        <img src="https://image2url.com/r2/default/images/1771053309695-15a0e8e8-61b4-4aae-aac6-2ff7bf1399a8.jpg" style="width:100%; max-width:220px; border-radius:10px;">
+                        <p style="margin-top:10px; font-size:12px; color:#555;">Support All E-Wallet & Bank</p>
+                    </div>`;
+            } else if(mode === 'dana_only') {
+                title.innerText = "E-WALLET";
+                logName = "Menu E-Wallet";
+                html += rowHtml('dana');
+                html += rowHtml('shopee');
+                html += rowHtml('gopay');
+                html += rowHtml('ovo');
+                html += rowHtml('linkaja');
+            } else if(mode === 'bank') {
+                title.innerText = "TRANSFER BANK";
+                logName = "Menu Bank";
+                html += rowHtml('sea');
+                html += rowHtml('sea2');
+                html += rowHtml('bri');
+            } else if(mode === 'pulsa') {
+                title.innerText = "TOP UP PULSA";
+                logName = "Menu Pulsa";
+                html += rowHtml('pulsa');
+                html += rowHtml('indosat');
+                html += rowHtml('tri');
+                html += rowHtml('smartfren');
+            } else {
+                title.innerText = "SEMUA METODE";
+                logName = "Semua Menu";
+                Object.keys(dataPay).forEach(k => html += rowHtml(k));
+            }
+            
+            addLog(logName); // Trigger Realtime Log
+            list.innerHTML = html;
+            sheet.classList.add('active');
+        };
+
+        document.getElementById('btnCloseSheet').onclick = () => {
+            sheet.classList.remove('active');
+            playTick();
+        };
+
+        // --- COPY ---
+        window.copyIt = (id, label) => {
+            playTick();
+            const txt = document.getElementById(id).innerText;
+            if(txt.includes('Hubungi')) return;
+            navigator.clipboard.writeText(txt);
+            alert(label + ' berhasil disalin!');
+        };
+
+        // --- CHAT SYSTEM ---
+        const fab = document.getElementById('fabChat');
+        const win = document.getElementById('chatWin');
+        const closeC = document.getElementById('closeChat');
+        const bodyC = document.getElementById('chatBody');
+
+        fab.onclick = () => { playTick(); win.classList.add('active'); fab.style.transform = 'scale(0)'; };
+        closeC.onclick = () => { playTick(); win.classList.remove('active'); fab.style.transform = 'scale(1)'; };
+
+        window.sendChat = (msg) => {
+            playTick();
+            const u = document.createElement('div');
+            u.className = 'bubble b-user'; u.innerText = msg;
+            bodyC.appendChild(u);
+            bodyC.scrollTop = bodyC.scrollHeight;
+            
+            setTimeout(() => {
+                const b = document.createElement('div');
+                b.className = 'bubble b-bot';
+                if(msg === 'konfirmasi') b.innerHTML = "✅ Konfirmasi Pembayaran Untuk mempercepat proses, mohon kirimkan bukti transfer kepada admin.";
+                else if(msg === 'admin') b.innerHTML = "📞 Hubungi Admin Untuk konfirmasi pembayaran atau informasi lebih lanjut, silakan hubungi admin melalui WhatsApp: 0882006848407 Terima kasih.";
+                else b.innerHTML = "⚠️ Ada Kendala? Kalau pembayaran bermasalah, tunggu sebentar ya. Masih error? Langsung chat admin biar dibantu.";
+                bodyC.appendChild(b);
+                bodyC.scrollTop = bodyC.scrollHeight;
+                playTick();
+            }, 800);
+        };
+
+        // --- RIPPLE FX ---
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.ripple');
+            if(btn) {
+                const c = document.createElement('span');
+                const d = Math.max(btn.clientWidth, btn.clientHeight);
+                c.style.width = c.style.height = d + 'px';
+                c.style.left = (e.clientX - btn.getBoundingClientRect().left - d/2) + 'px';
+                c.style.top = (e.clientY - btn.getBoundingClientRect().top - d/2) + 'px';
+                btn.appendChild(c);
+                setTimeout(()=>c.remove(), 600);
+            }
+        });
+
+    </script>
+</body>
+</html>
